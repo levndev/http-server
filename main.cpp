@@ -34,8 +34,10 @@ char * ReadFile(std::string path, int * length) {
     t.close();
     return buffer;
 }
-
-void WorkConnection(int sfd, std::string directory, bool test) {
+bool test = false;
+std::string working_directory;
+void * WorkConnection(void * data) {
+    int sfd = *(int*)data;
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
@@ -49,9 +51,8 @@ void WorkConnection(int sfd, std::string directory, bool test) {
         //std::cout << response << std::endl;
         send(sfd, response.c_str(), response.size(), 0);
         close(sfd);
-        return;
+        return NULL;
     }
-    return;
     while((length = recv(sfd, &buf, sizeof(buf), flags)) > 0) {
         std::string msg(buf);
         memset(&buf, 0, sizeof(buf));
@@ -62,7 +63,7 @@ void WorkConnection(int sfd, std::string directory, bool test) {
             if (type == "GET") {
                 //std::cout << type << " - " << resource << std::endl;
                 int file_length;
-                char * file_text = ReadFile(directory + resource, &file_length);
+                char * file_text = ReadFile(working_directory + resource, &file_length);
                 if (file_text != NULL) {
                     std::string response;
                     response.append("HTTP/1.0 200 OK\r\n");
@@ -97,7 +98,6 @@ int main(int argc, char ** argv) {
     std::string host = "0.0.0.0";
     std::string port = "12345";
     std::string directory = "./"; 
-    bool test;
     while((opt = getopt(argc, argv, "h:p:d:t")) != -1){
         switch(opt) {
             case 'h':
@@ -109,7 +109,7 @@ int main(int argc, char ** argv) {
                 //std::cout << "port: " << port << std::endl;
                 break;
             case 'd':
-                directory = optarg;
+                working_directory = optarg;
                 //std::cout << "directory: " << directory << std::endl;
                 break;
             case 't':
@@ -146,8 +146,19 @@ int main(int argc, char ** argv) {
     while(running) {
         int connection = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         if (connection != -1) {
-            std::thread worker(WorkConnection, connection, directory, test);
-            worker.detach();
+            //std::thread worker(WorkConnection, connection, directory, test);
+            //worker.detach();
+            pthread_t slavethread;
+            int pthreadCheck = pthread_create(&slavethread, NULL, WorkConnection, &connection);
+            if(pthreadCheck != 0)
+            {
+                //std::cout << "Something wrong with pthread creation" << std::endl;
+            }
+            int pthrDet = pthread_detach(slavethread);
+            if(pthrDet != 0)
+            {
+                //std::cout << "Something wrong with pthread detaching" << std::endl;
+            }
         }
     }
     // valread = read(new_socket, buffer, 1024);
