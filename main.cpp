@@ -16,7 +16,7 @@
 #include <thread>
 
 char * ReadFile(std::string path, int * length) {
-    std::cout << path << std::endl;
+    //std::cout << path << std::endl;
     std::ifstream t;
     t.open(path);      // open input file
     if (!t.good()) {
@@ -35,41 +35,23 @@ char * ReadFile(std::string path, int * length) {
     return buffer;
 }
 
-void WriteDebug(int linenumber, FILE * fd) {
-    if (fd == NULL)
-        return;
-    const char * s = (std::to_string(linenumber) + "\n").c_str();
-    fwrite(s, sizeof(char), strlen(s), fd);
-}
-
 void WorkConnection(int sfd, std::string directory) {
-    //FILE * logfile = fopen("/tmp/logfile", "w");
-    FILE * logfile = NULL;
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
     std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
-    WriteDebug(__LINE__, logfile);
     while((length = recv(sfd, &buf, sizeof(buf), flags)) > 0) {
         std::string msg(buf);
-        WriteDebug(__LINE__, logfile);
         memset(&buf, 0, sizeof(buf));
-        WriteDebug(__LINE__, logfile);
         std::smatch match;
-        WriteDebug(__LINE__, logfile);
         if (std::regex_search(msg, match, rgx)) {
             std::string type = match[1];
-            WriteDebug(__LINE__, logfile);
             std::string resource = match[2];
-            WriteDebug(__LINE__, logfile);
             if (type == "GET") {
                 //std::cout << type << " - " << resource << std::endl;
                 int file_length;
-                WriteDebug(__LINE__, logfile);
                 char * file_text = ReadFile(directory + resource, &file_length);
-                WriteDebug(__LINE__, logfile);
                 if (file_text != NULL) {
-                    WriteDebug(__LINE__, logfile);
                     std::string response;
                     response.append("HTTP/1.0 200 OK\r\n");
                     response.append("Content-length: ");
@@ -78,29 +60,23 @@ void WorkConnection(int sfd, std::string directory) {
                     response.append("Content-Type: text/html\r\n\r\n");
                     response.append(file_text);
                     response.append("\r\n\r\n");
-                    WriteDebug(__LINE__, logfile);
                     //std::cout << response << std::endl;
                     send(sfd, response.c_str(), response.size(), 0);
                     delete file_text;
-                    WriteDebug(__LINE__, logfile);
                 }
                 else {
-                    WriteDebug(__LINE__, logfile);
                     std::string response;
                     response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
                     response.append("Content-Length: 0\r\n") ;
                     response.append("Content-Type: text/html\r\n\r\n");
                     //response.append("404");
-                    WriteDebug(__LINE__, logfile);
                     //std::cout << response << std::endl;
                     send(sfd, response.c_str(), response.size(), 0);
-                    WriteDebug(__LINE__, logfile);
                 }
             }
         }
     }
     close(sfd);
-    //fclose(logfile);
 }
 
 int main(int argc, char ** argv) {
@@ -124,7 +100,7 @@ int main(int argc, char ** argv) {
                 break;
         }
     }
-    daemon(1, 0);
+    //daemon(1, 0);
     int server_fd;
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket failed");
