@@ -38,6 +38,17 @@ bool test = false;
 std::string working_directory;
 void * WorkConnection(void * data) {
     int sfd = *(int*)data;
+    if (test) {
+        std::string response;
+        response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
+        response.append("Content-Length: 0\r\n") ;
+        response.append("Content-Type: text/html\r\n\r\n");
+        //response.append("404");
+        //std::cout << response << std::endl;
+        send(sfd, response.c_str(), response.size(), 0);
+        close(sfd);
+        return NULL;
+    }
     ssize_t length;
     char buf[10240];
     memset(&buf, 0, sizeof(buf));
@@ -150,17 +161,6 @@ int main(int argc, char ** argv) {
         if (connection != -1) {
             //std::thread worker(WorkConnection, connection, directory, test);
             //worker.detach();
-            if (test) {
-                std::string response;
-                response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
-                response.append("Content-Length: 0\r\n") ;
-                response.append("Content-Type: text/html\r\n\r\n");
-                //response.append("404");
-                //std::cout << response << std::endl;
-                send(connection, response.c_str(), response.size(), 0);
-                close(connection);
-                continue;
-            }
             pthread_t slavethread;
             int pthreadCheck = pthread_create(&slavethread, NULL, WorkConnection, &connection);
             if(pthreadCheck != 0)
