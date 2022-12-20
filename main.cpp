@@ -42,9 +42,6 @@ void * WorkConnection(void * data) {
         close(sfd);
         return NULL;
     }
-    ssize_t length;
-    char buf[10240];
-    memset(&buf, 0, sizeof(buf));
     int flags = 0;
     std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
     std::vector<char> buffer(10000);
