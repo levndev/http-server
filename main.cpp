@@ -29,6 +29,19 @@ std::string ReadFile(std::string path, bool * success) {
 }
 bool test = false;
 std::string working_directory;
+void SendMsg(int sfd, std::string msg) {
+    std::string response;
+    response.append("HTTP/1.0 200 OK\r\n");
+    response.append("Content-length: ");
+    response.append(std::to_string(msg.size()));
+    response.append("\r\n");
+    response.append("Content-Type: text/html\r\n\r\n");
+    response.append(msg);
+    response.append("\r\n\r\n");
+    //std::cout << response << std::endl;
+    send(sfd, response.c_str(), response.size(), 0);
+    close(sfd);
+}
 void Send404(int sfd) {
     std::string response;
     response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
@@ -42,58 +55,62 @@ void Send404(int sfd) {
 void * WorkConnection(void * data) {
     int sfd = *(int*)data;
     int flags = 0;
-    std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
-    std::vector<char> buffer(10000);
-    std::string rcv;
-    int received;
-    do
-    {
-        received = recv(sfd, &buffer[0], buffer.size(), 0);
-        if(received == -1)
+    try {
+        std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
+        std::vector<char> buffer(10000);
+        std::string rcv;
+        int received;
+        do
         {
-            //std::cout << "0 bytes received (error)" << std::endl;
-        }
-        else
-        {
-            rcv.append(buffer.cbegin(), buffer.cend());
-        }
+            received = recv(sfd, &buffer[0], buffer.size(), 0);
+            if(received == -1)
+            {
+                //std::cout << "0 bytes received (error)" << std::endl;
+            }
+            else
+            {
+                rcv.append(buffer.cbegin(), buffer.cend());
+            }
 
-    } while(received == buffer.size());
-    std::smatch match;
-    if (std::regex_search(rcv, match, rgx)) {
-        if (test) {
-            Send404(sfd);
-            return NULL;
-        }
-        std::string type = match[1];
-        std::string resource = match[2];
-        if (type == "GET") {
-            //std::cout << type << " - " << resource << std::endl;
-            int file_length;
-            bool success = false;
-            std::string file_text = ReadFile(working_directory + resource, &success);
-            if (success) {
-                std::string response;
-                response.append("HTTP/1.0 200 OK\r\n");
-                response.append("Content-length: ");
-                response.append(std::to_string(file_text.size()));
-                response.append("\r\n");
-                response.append("Content-Type: text/html\r\n\r\n");
-                response.append(file_text);
-                response.append("\r\n\r\n");
-                //std::cout << response << std::endl;
-                send(sfd, response.c_str(), response.size(), 0);
+        } while(received == buffer.size());
+        std::smatch match;
+        if (std::regex_search(rcv, match, rgx)) {
+            if (test) {
+                Send404(sfd);
+                return NULL;
             }
-            else {
-                std::string response;
-                response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
-                response.append("Content-Length: 0\r\n") ;
-                response.append("Content-Type: text/html\r\n\r\n");
-                //response.append("404");
-                //std::cout << response << std::endl;
-                send(sfd, response.c_str(), response.size(), 0);
+            std::string type = match[1];
+            std::string resource = match[2];
+            if (type == "GET") {
+                //std::cout << type << " - " << resource << std::endl;
+                int file_length;
+                bool success = false;
+                std::string file_text = ReadFile(working_directory + resource, &success);
+                if (success) {
+                    std::string response;
+                    response.append("HTTP/1.0 200 OK\r\n");
+                    response.append("Content-length: ");
+                    response.append(std::to_string(file_text.size()));
+                    response.append("\r\n");
+                    response.append("Content-Type: text/html\r\n\r\n");
+                    response.append(file_text);
+                    response.append("\r\n\r\n");
+                    //std::cout << response << std::endl;
+                    send(sfd, response.c_str(), response.size(), 0);
+                }
+                else {
+                    std::string response;
+                    response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
+                    response.append("Content-Length: 0\r\n") ;
+                    response.append("Content-Type: text/html\r\n\r\n");
+                    //response.append("404");
+                    //std::cout << response << std::endl;
+                    send(sfd, response.c_str(), response.size(), 0);
+                }
             }
         }
+    } catch(std::exception& ex) {
+        SendMsg(sfd, ex.what());
     }
     close(sfd);
     return NULL;
