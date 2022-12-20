@@ -59,12 +59,12 @@ void * WorkConnection(void * data) {
         }
 
     } while(received == buffer.size());
-    if (test) {
-        Send404(sfd);
-        return NULL;
-    }
     std::smatch match;
     if (std::regex_search(rcv, match, rgx)) {
+        if (test) {
+            Send404(sfd);
+            return NULL;
+        }
         std::string type = match[1];
         std::string resource = match[2];
         if (type == "GET") {
