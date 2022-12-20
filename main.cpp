@@ -100,7 +100,7 @@ void WorkConnection(int sfd, std::string directory) {
         }
     }
     close(sfd);
-    fclose(logfile);
+    //fclose(logfile);
 }
 
 int main(int argc, char ** argv) {
