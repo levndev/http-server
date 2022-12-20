@@ -29,19 +29,18 @@ std::string ReadFile(std::string path, bool * success) {
 }
 bool test = false;
 std::string working_directory;
+void Send404(int sfd) {
+    std::string response;
+    response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
+    response.append("Content-Length: 0\r\n") ;
+    response.append("Content-Type: text/html\r\n\r\n");
+    //response.append("404");
+    //std::cout << response << std::endl;
+    send(sfd, response.c_str(), response.size(), 0);
+    close(sfd);
+}
 void * WorkConnection(void * data) {
     int sfd = *(int*)data;
-    if (test) {
-        std::string response;
-        response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
-        response.append("Content-Length: 0\r\n") ;
-        response.append("Content-Type: text/html\r\n\r\n");
-        //response.append("404");
-        //std::cout << response << std::endl;
-        send(sfd, response.c_str(), response.size(), 0);
-        close(sfd);
-        return NULL;
-    }
     int flags = 0;
     std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
     std::vector<char> buffer(10000);
@@ -60,6 +59,10 @@ void * WorkConnection(void * data) {
         }
 
     } while(received == buffer.size());
+    if (test) {
+        Send404(sfd);
+        return NULL;
+    }
     std::smatch match;
     if (std::regex_search(rcv, match, rgx)) {
         std::string type = match[1];
