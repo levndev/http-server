@@ -100,7 +100,7 @@ int main(int argc, char ** argv) {
                 break;
         }
     }
-    //daemon(1, 0);
+    daemon(1, 0);
     int server_fd;
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket failed");
