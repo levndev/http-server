@@ -39,13 +39,7 @@ void SendMsg(int sfd, std::string msg) {
     response.append(msg);
     response.append("\r\n\r\n");
     //std::cout << response << std::endl;
-    char *cstr = new char[response.length() + 1];
-    strcpy(cstr, response.c_str());
-    // do stuff
-    send(sfd, cstr, response.size(), 0);
-
-    delete [] cstr;
-    //send(sfd, response.c_str(), response.size(), 0);
+    send(sfd, response.c_str(), response.size(), 0);
     close(sfd);
 }
 void Send404(int sfd) {
@@ -115,8 +109,8 @@ void * WorkConnection(void * data) {
                 }
             }
         }
-    } catch(std::exception& ex) {
-        SendMsg(sfd, ex.what());
+    } catch(const std::regex_error& ex) {
+        SendMsg(sfd, ex.what() + ex.code());
     }
     close(sfd);
     return NULL;
