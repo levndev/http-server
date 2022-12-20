@@ -35,11 +35,23 @@ char * ReadFile(std::string path, int * length) {
     return buffer;
 }
 
-void WorkConnection(int sfd, std::string directory) {
+void WorkConnection(int sfd, std::string directory, bool test) {
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
     std::regex rgx(R"((\w+)\s+(\/[^\s\?]*)\S*\s+HTTP\/[\d.]+)");
+    if (test) {
+        std::string response;
+        response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
+        response.append("Content-Length: 0\r\n") ;
+        response.append("Content-Type: text/html\r\n\r\n");
+        //response.append("404");
+        //std::cout << response << std::endl;
+        send(sfd, response.c_str(), response.size(), 0);
+        close(sfd);
+        return;
+    }
+    return;
     while((length = recv(sfd, &buf, sizeof(buf), flags)) > 0) {
         std::string msg(buf);
         memset(&buf, 0, sizeof(buf));
@@ -85,7 +97,8 @@ int main(int argc, char ** argv) {
     std::string host = "0.0.0.0";
     std::string port = "12345";
     std::string directory = "./"; 
-    while((opt = getopt(argc, argv, "h:p:d:")) != -1){
+    bool test;
+    while((opt = getopt(argc, argv, "h:p:d:t")) != -1){
         switch(opt) {
             case 'h':
                 host = optarg;
@@ -97,6 +110,10 @@ int main(int argc, char ** argv) {
                 break;
             case 'd':
                 directory = optarg;
+                //std::cout << "directory: " << directory << std::endl;
+                break;
+            case 't':
+                test = true;
                 //std::cout << "directory: " << directory << std::endl;
                 break;
         }
@@ -129,7 +146,7 @@ int main(int argc, char ** argv) {
     while(running) {
         int connection = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         if (connection != -1) {
-            std::thread worker(WorkConnection, connection, directory);
+            std::thread worker(WorkConnection, connection, directory, test);
             worker.detach();
         }
     }
