@@ -36,12 +36,15 @@ char * ReadFile(std::string path, int * length) {
 }
 
 void WriteDebug(int linenumber, FILE * fd) {
+    if (fd == NULL)
+        return;
     const char * s = (std::to_string(linenumber) + "\n").c_str();
     fwrite(s, sizeof(char), strlen(s), fd);
 }
 
 void WorkConnection(int sfd, std::string directory) {
-    FILE * logfile = fopen("/tmp/logfile", "w");
+    //FILE * logfile = fopen("/tmp/logfile", "w");
+    FILE * logfile = NULL;
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
@@ -85,9 +88,9 @@ void WorkConnection(int sfd, std::string directory) {
                     WriteDebug(__LINE__, logfile);
                     std::string response;
                     response.append("HTTP/1.0 404 NOT FOUND\r\n") ;
-                    response.append("Content-Length: 3\r\n") ;
+                    response.append("Content-Length: 0\r\n") ;
                     response.append("Content-Type: text/html\r\n\r\n");
-                    response.append("404");
+                    //response.append("404");
                     WriteDebug(__LINE__, logfile);
                     //std::cout << response << std::endl;
                     send(sfd, response.c_str(), response.size(), 0);
@@ -102,9 +105,9 @@ void WorkConnection(int sfd, std::string directory) {
 
 int main(int argc, char ** argv) {
     int opt;
-    std::string host = "127.0.0.1";
+    std::string host = "0.0.0.0";
     std::string port = "12345";
-    std::string directory = ""; 
+    std::string directory = "./"; 
     while((opt = getopt(argc, argv, "h:p:d:")) != -1){
         switch(opt) {
             case 'h':
