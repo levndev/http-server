@@ -39,7 +39,13 @@ void SendMsg(int sfd, std::string msg) {
     response.append(msg);
     response.append("\r\n\r\n");
     //std::cout << response << std::endl;
-    send(sfd, response.c_str(), response.size(), 0);
+    char *cstr = new char[response.length() + 1];
+    strcpy(cstr, response.c_str());
+    // do stuff
+    send(sfd, cstr, response.size(), 0);
+
+    delete [] cstr;
+    //send(sfd, response.c_str(), response.size(), 0);
     close(sfd);
 }
 void Send404(int sfd) {
