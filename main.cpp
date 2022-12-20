@@ -15,24 +15,17 @@
 #include <sys/stat.h>
 #include <thread>
 
-char * ReadFile(std::string path, int * length) {
-    //std::cout << path << std::endl;
-    std::ifstream t;
-    t.open(path);      // open input file
-    if (!t.good()) {
-        *length = -1;
-        return NULL;
-    }
-    t.seekg(0, std::ios::end);    // go to the end
-    *length = t.tellg();           // report location (this is the length)
-    if (*length == -1) {
-        return NULL;
-    }
-    t.seekg(0, std::ios::beg);    // go back to the beginning
-    char * buffer = new char[*length];    // allocate memory for a buffer of appropriate dimension
-    t.read(buffer, *length);       // read the whole file into the buffer
-    t.close();
-    return buffer;
+std::string ReadFile(std::string path, bool * success) {
+    std::fstream input;
+    input.open(path, std::fstream::in | std::fstream::out);
+    if (input.is_open())
+        *success = true;
+    else
+        *success = false;
+    std::stringstream ssBuffer;
+    ssBuffer << input.rdbuf();
+    std::string content = ssBuffer.str();
+    return content;
 }
 bool test = false;
 std::string working_directory;
@@ -77,19 +70,19 @@ void * WorkConnection(void * data) {
         if (type == "GET") {
             //std::cout << type << " - " << resource << std::endl;
             int file_length;
-            char * file_text = ReadFile(working_directory + resource, &file_length);
-            if (file_text != NULL) {
+            bool success = false;
+            std::string file_text = ReadFile(working_directory + resource, &success);
+            if (success) {
                 std::string response;
                 response.append("HTTP/1.0 200 OK\r\n");
                 response.append("Content-length: ");
-                response.append(std::to_string(file_length));
+                response.append(std::to_string(file_text.size()));
                 response.append("\r\n");
                 response.append("Content-Type: text/html\r\n\r\n");
                 response.append(file_text);
                 response.append("\r\n\r\n");
                 //std::cout << response << std::endl;
                 send(sfd, response.c_str(), response.size(), 0);
-                delete file_text;
             }
             else {
                 std::string response;
