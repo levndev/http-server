@@ -142,12 +142,16 @@ int main(int argc, char ** argv) {
     //     perror("setsockopt");
     //     exit(EXIT_FAILURE);
     // }
-    sockaddr_in address;
-    int addrlen = sizeof(address);
-    address.sin_family = AF_INET;
-    inet_pton(AF_INET, host.c_str(), (void*)&address.sin_addr.s_addr);
-    address.sin_port = htons(stoi(port));
-    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+    int p = atoi(port.c_str());
+    //char host[sizeof(struct in_addr)];
+    in_addr h;
+    inet_pton(AF_INET, host.c_str(), &h);
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(p);
+    addr.sin_addr = h;
+    socklen_t socklen = sizeof(sockaddr_in);
+    if (bind(server_fd, (struct sockaddr*)(&addr), sizeof(addr)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
@@ -157,7 +161,7 @@ int main(int argc, char ** argv) {
     }
     bool running = true;
     while(running) {
-        int connection = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+        int connection = accept(server_fd, (struct sockaddr*)(&addr), &socklen);
         if (connection != -1) {
             //std::thread worker(WorkConnection, connection, directory, test);
             //worker.detach();
