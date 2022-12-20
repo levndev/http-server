@@ -41,7 +41,7 @@ void WriteDebug(int linenumber, FILE * fd) {
 }
 
 void WorkConnection(int sfd, std::string directory) {
-    //FILE * logfile = fopen("/tmp/logfile", "w");
+    FILE * logfile = fopen("/tmp/logfile", "w");
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
