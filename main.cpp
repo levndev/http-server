@@ -94,7 +94,7 @@ void * WorkConnection(void * data) {
                     response.append("\r\n");
                     response.append("Content-Type: text/html\r\n\r\n");
                     response.append(file_text);
-                    response.append("\r\n\r\n");
+                    //response.append("\r\n\r\n");
                     //std::cout << response << std::endl;
                     send(sfd, response.c_str(), response.size(), 0);
                 }
@@ -110,7 +110,7 @@ void * WorkConnection(void * data) {
             }
         }
     } catch(const std::regex_error& ex) {
-        SendMsg(sfd, ex.what() + ex.code());
+        SendMsg(sfd, ex.what());
     }
     close(sfd);
     return NULL;
