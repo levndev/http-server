@@ -75,8 +75,9 @@ void WorkConnection(int sfd, std::string directory) {
                 }
             }
         }
+        close(sfd);
+        break;
     }
-    close(sfd);
 }
 
 int main(int argc, char ** argv) {
