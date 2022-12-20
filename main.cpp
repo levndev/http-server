@@ -41,7 +41,7 @@ void WriteDebug(int linenumber, FILE * fd) {
 }
 
 void WorkConnection(int sfd, std::string directory) {
-    FILE * logfile = fopen("/tmp/logfile", "w");
+    //FILE * logfile = fopen("/tmp/logfile", "w");
     ssize_t length;
     char buf[10240] = {0};
     int flags = 0;
@@ -104,7 +104,7 @@ int main(int argc, char ** argv) {
     int opt;
     std::string host = "127.0.0.1";
     std::string port = "12345";
-    std::string directory = "/home/lev/http-server/folder"; 
+    std::string directory = ""; 
     while((opt = getopt(argc, argv, "h:p:d:")) != -1){
         switch(opt) {
             case 'h':
